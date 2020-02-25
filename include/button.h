@@ -1,74 +1,120 @@
 #pragma once
 
 #include <stdint.h>
+#include <memory>
 #include <functional>
 
 namespace Cyberdemon {
   using ButtonEventFunction = std::function<void()>;
 
   /**
+   * Button wrapper logic.
    *
+   * @example
+   * ```
+   * Button::Shared peonButton = Button::create(5);
    *
+   * peonButton->setOnPushed([]() {
+   *   Serial.println("Something need doing?");
+   * });
+   *
+   * peonButton->setOnReleased([]() {
+   *   Serial.println("I can do that.");
+   * });
+   *
+   * peonButton->setOnClicked([]() {
+   *   Serial.println("Me not that kind of orc!");
+   * });
+   *
+   * peonButton->setOnDoubleClicked([]() {
+   *   Serial.println("What you want?");
+   * });
+   *
+   * peonButton->setOnHolding([]() {
+   *   Serial.println("Hehe, that okay!");
+   * });
+   * ```
    */
-  class Button {
+  class Button : public std::enable_shared_from_this<Button> {
     public:
+      //!
+      using Shared = std::shared_ptr<Button>;
 
-      /**
-       * Constructor.
-       * @param pin Button pin.
-       */
-      Button(uint8_t pin);
+      template<typename ...T>
+      static Shared create(T&& ...t) {
+        return Shared(new Button(std::forward<T>(t)...));
+      }
 
       //! This is not the destructor you're looking for; move along, move along...
       virtual ~Button() {};
 
       /**
        * One-time button setup (registers pin, etc)
-       * @return *this
        */
-      Button& setup();
+      void setup();
 
       /**
        * Enable / Disable button.
        * @param shouldEnable Whether or not to enable the button.
        * @return *this
        */
-      Button& enable(const bool shouldEnable = true);
+      Shared enable(const bool shouldEnable = true);
 
       /**
        * Sets the polling update interval in ms.
        * @param updateInterval Update interval to set (in ms)
        * @return *this
        */
-      Button& setUpdateInterval(uint32_t updateInterval);
+      Shared setUpdateInterval(uint32_t updateInterval);
+
+      /**
+       * Sets the default minimum push time in ms.
+       * @param pushTime Push time to set (in ms)
+       * @return *this
+       */
+      Shared setDefaultMinPushTime(uint32_t pushTime);
+
+      /**
+       * Sets the default minimum release time in ms.
+       * @param pushTime Push time to set (in ms)
+       * @return *this
+       */
+      Shared setDefaultMinReleaseTime(uint32_t pushTime);
 
       /**
        * Sets the on push handler.
        * @param fn Button event function.
        * @return *this
        */
-      Button& setOnPushed(ButtonEventFunction fn);
+      Shared setOnPushed(ButtonEventFunction fn);
 
       /**
        * Sets the on release handler.
        * @param fn Button event function.
        * @return *this
        */
-      Button& setOnReleased(ButtonEventFunction fn);
+      Shared setOnReleased(ButtonEventFunction fn);
 
       /**
        * Sets the on click handler.
        * @param fn Button event function.
        * @return *this
        */
-      Button& setOnClicked(ButtonEventFunction fn);
+      Shared setOnClicked(ButtonEventFunction fn);
 
       /**
        * Sets the on double click handler.
        * @param fn Button event function.
        * @return *this
        */
-      Button& setOnDoubleClicked(ButtonEventFunction fn);
+      Shared setOnDoubleClicked(ButtonEventFunction fn);
+
+      /**
+       * Sets the on holding handler.
+       * @param fn Button event function.
+       * @return *this
+       */
+      Shared setOnHolding(ButtonEventFunction fn);
 
       /**
        * Runs the update logic for this button.
@@ -81,6 +127,22 @@ namespace Cyberdemon {
        * @return Returns true if the button is enabled, false otherwise.
        */
       const bool isEnabled() const;
+
+      /**
+       * Gets the button digital pin.
+       * @return
+       */
+      const uint8_t getButtonPin() const {
+        return this->buttonPin;
+      }
+
+    private:
+
+      /**
+       * Constructor.
+       * @param pin Button pin.
+       */
+      Button(uint8_t pin);
 
     protected:
 
@@ -222,4 +284,6 @@ namespace Cyberdemon {
       uint32_t defaultTimeSpan       = 500;
       uint32_t defaultHoldInterval   = 500;
   };
+
+  using SharedButton = std::shared_ptr<Button>;
 }

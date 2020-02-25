@@ -7,43 +7,58 @@ namespace Cyberdemon {
     setup();
   }
 
-  Button& Button::setup() {
+  void Button::setup() {
     if (!this->isSetupFlag) {
-      pinMode(this->buttonPin, INPUT);
+      pinMode(this->buttonPin, INPUT_PULLUP);
     }
 
     this->isSetupFlag = true;
-    return *this;
+    // return shared_from_this();
   }
 
-  Button& Button::enable(const bool shouldEnable) {
+  SharedButton Button::enable(const bool shouldEnable) {
     this->isEnabledFlag = shouldEnable;
-    return *this;
+    return shared_from_this();
   }
 
-  Button& Button::setUpdateInterval(uint32_t updateInterval) {
+  SharedButton Button::setUpdateInterval(uint32_t updateInterval) {
     this->updateInterval = updateInterval;
-    return *this;
+    return shared_from_this();
   }
 
-  Button& Button::setOnPushed(ButtonEventFunction fn) {
+  SharedButton Button::setDefaultMinPushTime(uint32_t pushTime) {
+    this->defaultMinPushTime = pushTime;
+    return shared_from_this();
+  }
+
+  SharedButton Button::setDefaultMinReleaseTime(uint32_t pushTime) {
+    this->defaultMinReleaseTime = pushTime;
+    return shared_from_this();
+  }
+
+  SharedButton Button::setOnPushed(ButtonEventFunction fn) {
     this->onPushedCB = fn;
-    return *this;
+    return shared_from_this();
   }
 
-  Button& Button::setOnReleased(ButtonEventFunction fn) {
+  SharedButton Button::setOnReleased(ButtonEventFunction fn) {
     this->onReleasedCB = fn;
-    return *this;
+    return shared_from_this();
   }
 
-  Button& Button::setOnClicked(ButtonEventFunction fn) {
+  SharedButton Button::setOnClicked(ButtonEventFunction fn) {
     this->onClickedCB = fn;
-    return *this;
+    return shared_from_this();
   }
 
-  Button& Button::setOnDoubleClicked(ButtonEventFunction fn) {
+  SharedButton Button::setOnDoubleClicked(ButtonEventFunction fn) {
     this->onDoubleClickedCB = fn;
-    return *this;
+    return shared_from_this();
+  }
+
+  SharedButton Button::setOnHolding(ButtonEventFunction fn) {
+    this->onHoldingCB = fn;
+    return shared_from_this();
   }
 
   void Button::update(uint32_t currentTime) {
@@ -55,7 +70,10 @@ namespace Cyberdemon {
       this->updateTime = currentTime;
 
       // Grab the current button state
-      if (digitalRead(this->buttonPin) == 0x1) {
+      uint8_t state = digitalRead(this->buttonPin);
+      // Serial.println(state);
+
+      if (state > LOW) {
         handlePush(currentTime);
       }
       else {
